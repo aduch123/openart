@@ -1,43 +1,23 @@
 const mongoose = require('mongoose');
 
-// Cache for serverless (Vercel)
-let cached = global.mongoose;
-
-if (!cached) {
-    cached = global.mongoose = { conn: null, promise: null };
-}
+let isConnected = false;
 
 async function connectDB() {
-    // If already connected, return the connection
-    if (cached.conn) {
-        return cached.conn;
+    if (isConnected) {
+        return;
     }
 
-    // If connection is pending, wait for it
-    if (cached.promise) {
-        return cached.promise;
-    }
-
-    // Create new connection
-    const opts = {
-        bufferCommands: true,  // ✅ Changed to true
-        maxPoolSize: 10,
-        serverSelectionTimeoutMS: 5000,
-    };
-
-    cached.promise = mongoose.connect(process.env.MONGODB_URI, opts)
-        .then((mongoose) => {
-            console.log('✅ MongoDB Connected');
-            return mongoose;
-        })
-        .catch((err) => {
-            console.error('❌ MongoDB Error:', err.message);
-            cached.promise = null;
-            throw err;
+    try {
+        await mongoose.connect(process.env.MONGODB_URI, {
+            bufferCommands: true,
+            serverSelectionTimeoutMS: 30000,
         });
-
-    cached.conn = await cached.promise;
-    return cached.conn;
+        isConnected = true;
+        console.log('✅ MongoDB Connected');
+    } catch (error) {
+        console.error('❌ MongoDB Error:', error.message);
+        throw error;
+    }
 }
 
 module.exports = connectDB;
