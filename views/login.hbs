@@ -121,8 +121,10 @@
             const data = await response.json();
             
             if (response.ok) {
+                const isSecure = window.location.protocol === 'https:';
+
                 localStorage.setItem('token', data.token);
-                document.cookie = `token=${data.token}; path=/; max-age=604800`;
+                document.cookie = `token=${data.token}; path=/; max-age=604800; ${isSecure ? 'Secure;' : ''} SameSite=Lax`;
                 
                 messageDiv.textContent = '✅ Login successful! Redirecting...';
                 messageDiv.classList.remove('hidden');
