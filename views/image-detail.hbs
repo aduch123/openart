@@ -1,0 +1,178 @@
+<div class="max-w-6xl mx-auto px-4 py-8">
+    
+    <a href="/" class="inline-flex items-center gap-2 text-gray-500 hover:text-rose-pink mb-6 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+        </svg>
+        Back to Gallery
+    </a>
+    
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div class="grid md:grid-cols-2 gap-0">
+            
+            <div class="bg-gray-100 flex items-center justify-center p-8">
+                <img src="{{image.imageUrl}}" alt="{{image.title}}" class="max-w-full max-h-[500px] rounded-lg object-contain">
+            </div>
+            
+            <div class="p-8">
+                <h1 class="text-3xl font-playfair font-bold text-gray-800 mb-3">{{image.title}}</h1>
+                
+                <div class="flex items-center gap-3 mb-6 pb-6 border-b border-gray-200">
+                    <div class="w-12 h-12 bg-gradient-to-r from-rose-pink to-soft-purple rounded-full flex items-center justify-center text-white text-xl">
+                        {{image.creator.avatar}}
+                    </div>
+                    <div>
+                        <p class="font-semibold text-gray-800">{{image.creator.name}}</p>
+                        <p class="text-sm text-gray-500">{{image.creator.email}}</p>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <span class="inline-block px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-600">
+                        {{image.category}}
+                    </span>
+                </div>
+                
+                <div class="mb-6">
+                    <h3 class="font-semibold text-gray-800 mb-2">Description</h3>
+                    <p class="text-gray-600 leading-relaxed">{{image.description}}</p>
+                </div>
+                
+                <div class="flex gap-6 mb-6 py-4 border-y border-gray-200">
+                    <div class="text-center">
+                        <div class="text-xl font-bold text-rose-pink">{{image.likesCount}}</div>
+                        <div class="text-xs text-gray-500">Likes</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-xl font-bold text-rose-pink">{{image.views}}</div>
+                        <div class="text-xs text-gray-500">Views</div>
+                    </div>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button id="likeBtn" onclick="likeImage()" class="flex-1 px-6 py-3 border-2 border-rose-pink text-rose-pink rounded-xl font-semibold hover:bg-rose-pink hover:text-white transition">
+                        <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                        </svg>
+                        Like
+                    </button>
+                    
+                    {{#if isOwner}}
+                    <a href="/image/edit/{{image._id}}" class="px-6 py-3 bg-blue-500 text-white rounded-xl font-semibold hover:bg-blue-600 transition">
+                        Edit
+                    </a>
+                    <button onclick="deleteImage()" class="px-6 py-3 bg-red-500 text-white rounded-xl font-semibold hover:bg-red-600 transition">
+                        Delete
+                    </button>
+                    {{/if}}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Comments Section -->
+    <div class="mt-8 bg-white rounded-2xl shadow-md p-8">
+        <h3 class="text-xl font-playfair font-bold text-gray-800 mb-4">💬 Comments</h3>
+        
+        <div class="flex gap-3 mb-6">
+            <textarea id="commentInput" rows="2" class="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-pink" placeholder="Share your thoughts..."></textarea>
+            <button onclick="addComment()" class="px-6 py-2 gradient-btn text-white rounded-xl font-semibold">
+                Post
+            </button>
+        </div>
+        
+        <div id="commentsList" class="space-y-4">
+            {{#each image.comments}}
+            <div class="border-b border-gray-100 pb-3">
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 bg-gradient-to-r from-rose-pink to-soft-purple rounded-full flex items-center justify-center text-white text-sm">
+                        {{#if this.user.avatar}}{{this.user.avatar}}{{else}}👤{{/if}}
+                    </div>
+                    <div class="flex-1">
+                        <p class="font-semibold text-gray-800 text-sm">{{this.user.name}}</p>
+                        <p class="text-gray-600 text-sm">{{this.text}}</p>
+                        <p class="text-xs text-gray-400 mt-1">{{this.createdAt}}</p>
+                    </div>
+                </div>
+            </div>
+            {{else}}
+            <p class="text-gray-400 text-center py-4">No comments yet. Be the first!</p>
+            {{/each}}
+        </div>
+    </div>
+</div>
+
+<script>
+    const imageId = '{{image._id}}';
+    const token = localStorage.getItem('token');
+    
+    async function likeImage() {
+        if (!token) {
+            alert('Please login to like artworks');
+            window.location.href = '/login';
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/images/${imageId}/like`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                document.querySelector('.text-xl.font-bold.text-rose-pink').textContent = data.likes;
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    }
+    
+    async function deleteImage() {
+        if (confirm('Are you sure you want to delete this artwork?')) {
+            try {
+                const response = await fetch(`/api/images/${imageId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    window.location.href = '/dashboard';
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+    }
+    
+    async function addComment() {
+        if (!token) {
+            alert('Please login to comment');
+            window.location.href = '/login';
+            return;
+        }
+        
+        const text = document.getElementById('commentInput').value.trim();
+        if (!text) {
+            alert('Please enter a comment');
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/images/${imageId}/comment`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ text })
+            });
+            
+            if (response.ok) {
+                window.location.reload();
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    }
+</script>
