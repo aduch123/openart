@@ -5,6 +5,7 @@ const dotenv = require('dotenv');
 const session = require('express-session');
 const passport = require('passport');
 const connectDB = require('./config/db');
+const MongoStore = require('connect-mongo');
 
 if (process.env.NODE_ENV === 'production') {
     console.log = function() {}; // Optional: disable logs in production
@@ -31,11 +32,15 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'your_secret_key',
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
+    store: MongoStore.create({
+        mongoUrl: process.env.MONGODB_URI,
+        ttl: 7 * 24 * 60 * 60 // 7 days
+    }),
     cookie: {
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        maxAge: 7 * 24 * 60 * 60 * 1000
     }
 }));
 
