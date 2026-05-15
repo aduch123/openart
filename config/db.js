@@ -20,7 +20,7 @@ async function connectDB() {
 
     // Create new connection
     const opts = {
-        bufferCommands: false,
+        bufferCommands: true,  // ✅ Changed to true
         maxPoolSize: 10,
         serverSelectionTimeoutMS: 5000,
     };

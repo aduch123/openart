@@ -15,7 +15,7 @@ if (process.env.NODE_ENV === 'production') {
 dotenv.config();
 
 // Connect to database
-connectDB();
+connectDB().catch(err => console.error('DB connection error:', err));
 
 // Import routes
 const authRoutes = require('./routes/authRoutes');
